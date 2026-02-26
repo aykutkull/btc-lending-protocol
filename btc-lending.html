@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BTCLendingProtocol v2 — OP_NET DeFi</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a08;
+    --surface: #111110;
+    --surface2: #1a1a17;
+    --border: #2a2a24;
+    --btc: #f7931a;
+    --btc-dim: rgba(247,147,26,0.12);
+    --btc-glow: rgba(247,147,26,0.35);
+    --green: #22c55e;
+    --red: #ef4444;
+    --blue: #3b82f6;
+    --text: #e8e6df;
+    --muted: #888880;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grid noise texture */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(247,147,26,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(247,147,26,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Ambient glow */
+  body::after {
+    content: '';
+    position: fixed;
+    top: -200px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 700px;
+    height: 700px;
+    background: radial-gradient(circle, rgba(247,147,26,0.07) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── HEADER ── */
+  header {
+    padding: 32px 0 0;
+    position: relative;
+    z-index: 1;
+  }
+
+  .nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-icon {
+    width: 36px;
+    height: 36px;
+    background: var(--btc);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 16px;
+    color: #000;
+    box-shadow: 0 0 20px var(--btc-glow);
+    animation: pulse-glow 3s ease-in-out infinite;
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 20px var(--btc-glow); }
+    50% { box-shadow: 0 0 35px rgba(247,147,26,0.6); }
+  }
+
+  .logo-text {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+
+  .logo-text span {
+    color: var(--btc);
+  }
+
+  .nav-badge {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--btc);
+    background: var(--btc-dim);
+    border: 1px solid rgba(247,147,26,0.25);
+    padding: 4px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+  }
+
+  .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--green);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--green);
+    animation: blink 2s ease-in-out infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .status-text {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--green);
+  }
+
+  /* ── HERO ── */
+  .hero {
+    padding: 72px 0 56px;
+    text-align: center;
+  }
+
+  .hero-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--btc);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    opacity: 0;
+    animation: fade-up 0.6s ease forwards 0.1s;
+  }
+
+  .hero-title {
+    font-size: clamp(36px, 6vw, 68px);
+    font-weight: 800;
+    line-height: 1.0;
+    letter-spacing: -2px;
+    margin-bottom: 20px;
+    opacity: 0;
+    animation: fade-up 0.6s ease forwards 0.2s;
+  }
+
+  .hero-title .accent { color: var(--btc); }
+  .hero-title .dim { color: var(--muted); }
+
+  .hero-sub {
+    font-family: var(--mono);
+    font-size: 14px;
+    color: var(--muted);
+    max-width: 520px;
+    margin: 0 auto 40px;
+    line-height: 1.7;
+    opacity: 0;
+    animation: fade-up 0.6s ease forwards 0.3s;
+  }
+
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── STATS ROW ── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 48px;
+    opacity: 0;
+    animation: fade-up 0.6s ease forwards 0.4s;
+  }
+
+  .stat-item {
+    background: var(--surface);
+    padding: 24px;
+    text-align: center;
+    transition: background 0.2s;
+  }
+
+  .stat-item:hover { background: var(--surface2); }
+
+  .stat-value {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--btc);
+    letter-spacing: -1px;
+    margin-bottom: 4px;
+  }
+
+  .stat-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  /* ── SECTION TITLE ── */
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .section-num {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--btc);
+    background: var(--btc-dim);
+    border: 1px solid rgba(247,147,26,0.2);
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .section-title {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+
+  /* ── FLOW SECTION ── */
+  .flow-section {
+    margin-bottom: 48px;
+  }
+
+  .flow-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .flow-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    transition: border-color 0.2s, transform 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .flow-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--btc);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s;
+  }
+
+  .flow-card:hover { border-color: rgba(247,147,26,0.3); transform: translateY(-2px); }
+  .flow-card:hover::before { transform: scaleX(1); }
+
+  .flow-card.green::before { background: var(--green); }
+  .flow-card.blue::before { background: var(--blue); }
+  .flow-card.red::before { background: var(--red); }
+
+  .flow-icon {
+    font-size: 24px;
+    margin-bottom: 12px;
+  }
+
+  .flow-title {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .flow-steps {
+    list-style: none;
+  }
+
+  .flow-steps li {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    line-height: 1.5;
+  }
+
+  .flow-steps li:last-child { border-bottom: none; }
+
+  .step-arrow {
+    color: var(--btc);
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  /* ── PARAMS ── */
+  .params-section {
+    margin-bottom: 48px;
+  }
+
+  .params-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+
+  .param-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    transition: all 0.2s;
+  }
+
+  .param-card:hover {
+    background: var(--surface2);
+    border-color: rgba(247,147,26,0.25);
+  }
+
+  .param-value {
+    font-family: var(--mono);
+    font-size: 26px;
+    font-weight: 500;
+    color: var(--btc);
+    margin-bottom: 6px;
+  }
+
+  .param-name {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .param-desc {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  /* ── ARCHITECTURE ── */
+  .arch-section {
+    margin-bottom: 48px;
+  }
+
+  .arch-diagram {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 32px;
+    font-family: var(--mono);
+    font-size: 13px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .arch-diagram::before {
+    content: 'TOKEN FLOW DIAGRAM';
+    position: absolute;
+    top: 16px;
+    right: 20px;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--border);
+  }
+
+  .flow-row {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+
+  .actor {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 16px;
+    text-align: center;
+    min-width: 120px;
+  }
+
+  .actor-label {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+  }
+
+  .actor-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .actor.protocol {
+    background: var(--btc-dim);
+    border-color: rgba(247,147,26,0.3);
+    min-width: 220px;
+  }
+
+  .actor.protocol .actor-name { color: var(--btc); }
+
+  .arrow-line {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 8px;
+    min-width: 100px;
+  }
+
+  .arrow-label {
+    font-size: 10px;
+    color: var(--btc);
+    margin-bottom: 4px;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  .arrow-body {
+    width: 100%;
+    height: 1px;
+    background: var(--border);
+    position: relative;
+  }
+
+  .arrow-body::after {
+    content: '▶';
+    position: absolute;
+    right: -4px;
+    top: -6px;
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  /* ── SECURITY ── */
+  .security-section {
+    margin-bottom: 48px;
+  }
+
+  .security-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+  }
+
+  .sec-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px;
+    transition: all 0.2s;
+  }
+
+  .sec-card:hover { border-color: rgba(247,147,26,0.25); }
+
+  .sec-icon {
+    font-size: 28px;
+    margin-bottom: 12px;
+  }
+
+  .sec-title {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .sec-desc {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  /* ── CODE BLOCK ── */
+  .code-section {
+    margin-bottom: 48px;
+  }
+
+  .code-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 0;
+  }
+
+  .code-tab {
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 10px 20px;
+    cursor: pointer;
+    color: var(--muted);
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    margin-bottom: -1px;
+  }
+
+  .code-tab.active { color: var(--btc); border-bottom-color: var(--btc); }
+  .code-tab:hover:not(.active) { color: var(--text); }
+
+  .code-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-top: none;
+    border-radius: 0 0 10px 10px;
+    padding: 24px;
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.8;
+    overflow-x: auto;
+    display: none;
+  }
+
+  .code-block.active { display: block; }
+
+  .kw { color: #c084fc; }
+  .fn { color: #60a5fa; }
+  .str { color: #86efac; }
+  .num { color: var(--btc); }
+  .cm { color: var(--muted); font-style: italic; }
+  .var { color: var(--text); }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 32px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 40px;
+  }
+
+  .footer-left {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .footer-links {
+    display: flex;
+    gap: 24px;
+  }
+
+  .footer-link {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .footer-link:hover { color: var(--btc); }
+
+  /* ── DIVIDER ── */
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 48px 0;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 768px) {
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+    .flow-grid { grid-template-columns: 1fr; }
+    .params-grid { grid-template-columns: repeat(2, 1fr); }
+    .security-grid { grid-template-columns: 1fr; }
+    .hero-title { font-size: 36px; letter-spacing: -1px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- NAV -->
+  <header>
+    <nav class="nav">
+      <div class="logo">
+        <div class="logo-icon">₿</div>
+        <div class="logo-text"><span>BTC</span>Lending<span>Protocol</span></div>
+        <div class="nav-badge">v2 · OP_20</div>
+      </div>
+      <div class="nav-right">
+        <div class="status-dot"></div>
+        <span class="status-text">OP_NET REGTEST</span>
+      </div>
+    </nav>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-label">Decentralized Finance on Bitcoin</div>
+    <h1 class="hero-title">
+      Bitcoin-Native<br>
+      <span class="accent">Lending</span> <span class="dim">&</span><br>
+      Borrowing Protocol
+    </h1>
+    <p class="hero-sub">
+      Built on OP_NET with AssemblyScript. Real OP_20 token flows,<br>
+      collateral-backed loans, and permissionless liquidations — on Bitcoin.
+    </p>
+  </section>
+
+  <!-- STATS -->
+  <div class="stats-row">
+    <div class="stat-item">
+      <div class="stat-value">5%</div>
+      <div class="stat-label">Annual Interest</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value">150%</div>
+      <div class="stat-label">Min Collateral</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value">120%</div>
+      <div class="stat-label">Liquidation Trigger</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value">+5%</div>
+      <div class="stat-label">Liquidator Bonus</div>
+    </div>
+  </div>
+
+  <!-- FLOWS -->
+  <section class="flow-section">
+    <div class="section-header">
+      <div class="section-num">01</div>
+      <div class="section-title">Protocol Flows</div>
+    </div>
+
+    <div class="flow-grid">
+
+      <div class="flow-card green">
+        <div class="flow-icon">💧</div>
+        <div class="flow-title">Lender: Deposit Liquidity</div>
+        <ul class="flow-steps">
+          <li><span class="step-arrow">→</span> Call <code>loanToken.approve(lendingContract, amount)</code></li>
+          <li><span class="step-arrow">→</span> Call <code>lending.depositLiquidity(amount)</code></li>
+          <li><span class="step-arrow">→</span> Contract pulls tokens via <code>transferFrom</code></li>
+          <li><span class="step-arrow">→</span> Pool balance increases, interest accrues</li>
+        </ul>
+      </div>
+
+      <div class="flow-card green">
+        <div class="flow-icon">📤</div>
+        <div class="flow-title">Lender: Withdraw Liquidity</div>
+        <ul class="flow-steps">
+          <li><span class="step-arrow">→</span> No approve needed (contract sends)</li>
+          <li><span class="step-arrow">→</span> Call <code>lending.withdrawLiquidity(0)</code></li>
+          <li><span class="step-arrow">→</span> Contract sends <code>principal + accrued interest</code></li>
+          <li><span class="step-arrow">→</span> Pass <code>0</code> to withdraw full balance</li>
+        </ul>
+      </div>
+
+      <div class="flow-card">
+        <div class="flow-icon">🔒</div>
+        <div class="flow-title">Borrower: Deposit Collateral</div>
+        <ul class="flow-steps">
+          <li><span class="step-arrow">→</span> Call <code>collateralToken.approve(lending, amount)</code></li>
+          <li><span class="step-arrow">→</span> Call <code>lending.depositCollateral(amount)</code></li>
+          <li><span class="step-arrow">→</span> Collateral locked via <code>transferFrom</code></li>
+          <li><span class="step-arrow">→</span> Position becomes borrowing-eligible</li>
+        </ul>
+      </div>
+
+      <div class="flow-card">
+        <div class="flow-icon">💸</div>
+        <div class="flow-title">Borrower: Borrow & Repay</div>
+        <ul class="flow-steps">
+          <li><span class="step-arrow">→</span> Call <code>lending.borrow(amount, colPrice)</code></li>
+          <li><span class="step-arrow">→</span> Contract transfers <code>loanToken</code> to borrower</li>
+          <li><span class="step-arrow">→</span> Approve <code>totalDebt</code>, call <code>lending.repay()</code></li>
+          <li><span class="step-arrow">→</span> Collateral returned after full repayment</li>
+        </ul>
+      </div>
+
+      <div class="flow-card red">
+        <div class="flow-icon">⚡</div>
+        <div class="flow-title">Liquidation</div>
+        <ul class="flow-steps">
+          <li><span class="step-arrow">→</span> Monitor positions where <code>colRatio &lt; 120%</span></li>
+          <li><span class="step-arrow">→</span> Approve <code>totalDebt</code> in <code>loanToken</code></li>
+          <li><span class="step-arrow">→</span> Call <code>lending.liquidate(borrower, colPrice)</code></li>
+          <li><span class="step-arrow">→</span> Receive collateral + <strong>5% bonus</strong></li>
+        </ul>
+      </div>
+
+      <div class="flow-card blue">
+        <div class="flow-icon">🛡️</div>
+        <div class="flow-title">Security Model</div>
+        <ul class="flow-steps">
+          <li><span class="step-arrow">→</span> Every transfer is a two-step: <code>approve → transferFrom</code></li>
+          <li><span class="step-arrow">→</span> Allowance checked before execution</li>
+          <li><span class="step-arrow">→</span> Reentrancy-safe by design</li>
+          <li><span class="step-arrow">→</span> Matches Solidity ERC-20 security model</li>
+        </ul>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- PARAMS -->
+  <section class="params-section">
+    <div class="section-header">
+      <div class="section-num">02</div>
+      <div class="section-title">Protocol Parameters</div>
+    </div>
+    <div class="params-grid">
+      <div class="param-card">
+        <div class="param-value">500</div>
+        <div class="param-name">Annual Interest BPS</div>
+        <div class="param-desc">5% yearly rate</div>
+      </div>
+      <div class="param-card">
+        <div class="param-value">150%</div>
+        <div class="param-name">Collateral Ratio</div>
+        <div class="param-desc">Min collateralization</div>
+      </div>
+      <div class="param-card">
+        <div class="param-value">120%</div>
+        <div class="param-name">Liquidation Threshold</div>
+        <div class="param-desc">Triggers liquidation</div>
+      </div>
+      <div class="param-card">
+        <div class="param-value">500</div>
+        <div class="param-name">Liquidation Bonus BPS</div>
+        <div class="param-desc">+5% for liquidators</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ARCHITECTURE DIAGRAM -->
+  <section class="arch-section">
+    <div class="section-header">
+      <div class="section-num">03</div>
+      <div class="section-title">Token Flow Architecture</div>
+    </div>
+
+    <div class="arch-diagram">
+      <div class="flow-row">
+        <div class="actor">
+          <div class="actor-label">Lender</div>
+          <div class="actor-name">👤 User</div>
+        </div>
+        <div class="arrow-line">
+          <div class="arrow-label">approve(lending, amount)</div>
+          <div class="arrow-body"></div>
+        </div>
+        <div class="actor">
+          <div class="actor-label">OP_20 Token</div>
+          <div class="actor-name">🪙 loanToken</div>
+        </div>
+      </div>
+
+      <div class="flow-row" style="justify-content: center; margin: 8px 0;">
+        <div style="font-family: var(--mono); font-size: 11px; color: var(--muted);">↓ depositLiquidity(amount)</div>
+      </div>
+
+      <div class="flow-row">
+        <div class="actor">
+          <div class="actor-label">Borrower</div>
+          <div class="actor-name">👤 User</div>
+        </div>
+        <div class="arrow-line">
+          <div class="arrow-label">depositCollateral + borrow</div>
+          <div class="arrow-body"></div>
+        </div>
+        <div class="actor protocol">
+          <div class="actor-label">Smart Contract</div>
+          <div class="actor-name">⚙️ BTCLendingProtocol</div>
+        </div>
+        <div class="arrow-line">
+          <div class="arrow-label">transfer(lender, principal+interest)</div>
+          <div class="arrow-body"></div>
+        </div>
+        <div class="actor">
+          <div class="actor-label">OP_20 Token</div>
+          <div class="actor-name">🪙 collateralToken</div>
+        </div>
+      </div>
+
+      <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border);">
+        <div style="font-size: 11px; color: var(--muted); font-family: var(--mono); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px;">Internal Operations</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+          <div style="font-family: var(--mono); font-size: 12px; color: var(--muted); padding: 8px; background: var(--surface2); border-radius: 6px;">
+            <span style="color: var(--green);">transferFrom(lender → self)</span> — liquidity deposited
+          </div>
+          <div style="font-family: var(--mono); font-size: 12px; color: var(--muted); padding: 8px; background: var(--surface2); border-radius: 6px;">
+            <span style="color: var(--green);">transfer(self → lender)</span> — liquidity + interest withdrawn
+          </div>
+          <div style="font-family: var(--mono); font-size: 12px; color: var(--muted); padding: 8px; background: var(--surface2); border-radius: 6px;">
+            <span style="color: var(--blue);">transferFrom(borrower → self)</span> — collateral locked
+          </div>
+          <div style="font-family: var(--mono); font-size: 12px; color: var(--muted); padding: 8px; background: var(--surface2); border-radius: 6px;">
+            <span style="color: var(--blue);">transfer(self → borrower)</span> — loan disbursed
+          </div>
+          <div style="font-family: var(--mono); font-size: 12px; color: var(--muted); padding: 8px; background: var(--surface2); border-radius: 6px;">
+            <span style="color: var(--btc);">transferFrom(borrower → self)</span> — debt repaid
+          </div>
+          <div style="font-family: var(--mono); font-size: 12px; color: var(--muted); padding: 8px; background: var(--surface2); border-radius: 6px;">
+            <span style="color: var(--btc);">transfer(self → borrower)</span> — collateral returned
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CODE SAMPLE -->
+  <section class="code-section">
+    <div class="section-header">
+      <div class="section-num">04</div>
+      <div class="section-title">Usage Examples</div>
+    </div>
+
+    <div class="code-tabs">
+      <div class="code-tab active" onclick="showTab('lender')">Lender</div>
+      <div class="code-tab" onclick="showTab('borrower')">Borrower</div>
+      <div class="code-tab" onclick="showTab('liquidator')">Liquidator</div>
+      <div class="code-tab" onclick="showTab('deploy')">Deploy</div>
+    </div>
+
+    <div id="tab-lender" class="code-block active">
+<span class="cm">// Step 1: Approve loanToken spending</span>
+<span class="kw">await</span> loanToken.<span class="fn">approve</span>(lendingContractAddress, amount);
+
+<span class="cm">// Step 2: Deposit into the liquidity pool</span>
+<span class="kw">await</span> lending.<span class="fn">depositLiquidity</span>(amount);
+<span class="cm">// → Contract calls: loanToken.transferFrom(caller, self, amount)</span>
+
+<span class="cm">// Withdraw (no approve needed — contract sends to you)</span>
+<span class="kw">await</span> lending.<span class="fn">withdrawLiquidity</span>(<span class="num">0n</span>); <span class="cm">// 0 = withdraw all</span>
+<span class="cm">// → loanToken.transfer(caller, principal + interest)</span>
+    </div>
+
+    <div id="tab-borrower" class="code-block">
+<span class="cm">// Step 1: Lock collateral</span>
+<span class="kw">await</span> collateralToken.<span class="fn">approve</span>(lendingContractAddress, collateralAmount);
+<span class="kw">await</span> lending.<span class="fn">depositCollateral</span>(collateralAmount);
+
+<span class="cm">// Step 2: Borrow loan tokens (colPrice: 1e18 = 1:1 value)</span>
+<span class="kw">await</span> lending.<span class="fn">borrow</span>(loanAmount, <span class="fn">BigInt</span>(<span class="num">1e18</span>));
+<span class="cm">// → loanToken.transfer(caller, loanAmount)</span>
+
+<span class="cm">// Step 3: Repay debt</span>
+<span class="kw">const</span> { result: totalDebt } = <span class="kw">await</span> lending.<span class="fn">getTotalDebt</span>(myAddress);
+<span class="kw">await</span> loanToken.<span class="fn">approve</span>(lendingContractAddress, totalDebt);
+<span class="kw">await</span> lending.<span class="fn">repay</span>();
+<span class="cm">// → collateralToken returned to borrower</span>
+    </div>
+
+    <div id="tab-liquidator" class="code-block">
+<span class="cm">// Find undercollateralized positions (ratio &lt; 120)</span>
+<span class="kw">const</span> { result: ratio } = <span class="kw">await</span> lending.<span class="fn">getCollateralRatio</span>(borrower, currentPrice);
+
+<span class="kw">if</span> (ratio &lt; <span class="num">120n</span>) {
+    <span class="cm">// Get total outstanding debt</span>
+    <span class="kw">const</span> { result: debt } = <span class="kw">await</span> lending.<span class="fn">getTotalDebt</span>(borrower);
+
+    <span class="cm">// Approve loan token repayment</span>
+    <span class="kw">await</span> loanToken.<span class="fn">approve</span>(lendingContractAddress, debt);
+
+    <span class="cm">// Liquidate — receive collateral + 5% bonus</span>
+    <span class="kw">await</span> lending.<span class="fn">liquidate</span>(borrower, currentPrice);
+}
+    </div>
+
+    <div id="tab-deploy" class="code-block">
+<span class="cm"># Set environment variables</span>
+export WALLET_WIF=<span class="str">"cQz..."</span>
+export LOAN_TOKEN_ADDRESS=<span class="str">"bcrt1p..."</span>
+export COLLATERAL_TOKEN_ADDRESS=<span class="str">"bcrt1p..."</span>
+export NETWORK=<span class="str">"regtest"</span>
+export RPC_URL=<span class="str">"https://regtest.opnet.org"</span>
+
+<span class="cm"># Build the contract</span>
+npm run build   <span class="cm"># → build/contract.wasm</span>
+
+<span class="cm"># Deploy and run full flow</span>
+npm run deploy  <span class="cm"># deploys → approve → deposit → borrow → repay → withdraw</span>
+    </div>
+  </section>
+
+  <!-- SECURITY -->
+  <section class="security-section">
+    <div class="section-header">
+      <div class="section-num">05</div>
+      <div class="section-title">Security Architecture</div>
+    </div>
+    <div class="security-grid">
+      <div class="sec-card">
+        <div class="sec-icon">🔐</div>
+        <div class="sec-title">Approve-First Pattern</div>
+        <div class="sec-desc">Every token transfer requires a prior <code>approve()</code> call. The contract uses <code>transferFrom()</code>, matching Solidity's ERC-20 battle-tested security model.</div>
+      </div>
+      <div class="sec-card">
+        <div class="sec-icon">🛡️</div>
+        <div class="sec-title">Allowance Checks</div>
+        <div class="sec-desc">Before every <code>transferFrom</code>, the contract verifies sufficient allowance via <code>allowance()</code>. Insufficient funds abort the transaction immediately.</div>
+      </div>
+      <div class="sec-card">
+        <div class="sec-icon">₿</div>
+        <div class="sec-title">Bitcoin UTXO Compatible</div>
+        <div class="sec-desc">Contracts can't hold native BTC on OP_NET. All value flows through OP_20 wrapper tokens, staying compatible with Bitcoin's UTXO model.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-left">
+      BTCLendingProtocol v2 · AssemblyScript · OP_NET · DeFi Category
+    </div>
+    <div class="footer-links">
+      <a class="footer-link" href="https://opnet.org">OP_NET</a>
+      <a class="footer-link" href="https://github.com/btc-vision/btc-runtime">btc-runtime</a>
+      <a class="footer-link" href="https://github.com/btc-vision/OP_20">OP_20 Standard</a>
+    </div>
+  </footer>
+
+</div>
+
+<script>
+  function showTab(id) {
+    document.querySelectorAll('.code-block').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.code-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-' + id).classList.add('active');
+    event.target.classList.add('active');
+  }
+
+  // Staggered entrance for cards
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry, i) => {
+      if (entry.isIntersecting) {
+        setTimeout(() => {
+          entry.target.style.opacity = '1';
+          entry.target.style.transform = 'translateY(0)';
+        }, i * 80);
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.flow-card, .param-card, .sec-card').forEach(el => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(16px)';
+    el.style.transition = 'opacity 0.5s ease, transform 0.5s ease, border-color 0.2s';
+    observer.observe(el);
+  });
+</script>
+
+</body>
+</html>
