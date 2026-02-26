@@ -1,0 +1,22 @@
+{
+  "name": "btc-lending-protocol-v2",
+  "version": "2.0.0",
+  "description": "Bitcoin Lending Protocol on OP_NET — Tam OP_20 Token Akışı ile",
+  "scripts": {
+    "build": "npx asc src/index.ts --target release --outFile build/contract.wasm --textFile build/contract.wat --sourceMap --optimize",
+    "build:debug": "npx asc src/index.ts --target debug --outFile build/contract_debug.wasm",
+    "deploy": "npx ts-node scripts/deploy-and-interact.ts"
+  },
+  "dependencies": {
+    "@btc-vision/btc-runtime": "latest",
+    "@btc-vision/transaction": "latest",
+    "@btc-vision/bitcoin": "latest",
+    "as-bignum": "latest",
+    "opnet": "latest"
+  },
+  "devDependencies": {
+    "assemblyscript": "latest",
+    "ts-node": "latest",
+    "typescript": "latest"
+  }
+}
